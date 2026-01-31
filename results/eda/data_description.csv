@@ -1,0 +1,12 @@
+,sigla_uf_residencia,idade_paciente,sexo_paciente,raca_cor_paciente,gestante_paciente,possui_doenca_autoimune,possui_diabetes,possui_doencas_hematologicas,possui_hepatopatias,possui_doenca_renal,possui_hipertensao,possui_doenca_acido_peptica,apresenta_febre,apresenta_cefaleia,apresenta_exantema,apresenta_dor_costas,apresenta_mialgia,apresenta_vomito,apresenta_conjutivite,apresenta_dor_retroorbital,apresenta_artralgia,apresenta_artrite,apresenta_leucopenia,apresenta_petequias,prova_laco,dias_sintomas_notificacao,severity
+count,716815,716815.0,716815,716815,716815,716815,716815,716815,716815,716815,716815,716815,716815,716815,716815,716815,716815,716815,716815,716815,716815,716815,716815,716815,716815,716815.0,716815
+unique,5,,2,6,7,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,,3
+top,SE,,F,1,6,2,2,2,2,2,2,2,1,1,2,2,1,2,2,2,2,2,2,2,2,,low_risk
+freq,307751,,391095,299225,406340,710815,678826,711525,711792,710827,634501,713005,572570,509808,583715,520419,516773,527221,687019,493009,571853,644249,641983,634881,691029,,420846
+mean,,36.58771896362305,,,,,,,,,,,,,,,,,,,,,,,,5.534152984619141,
+std,,20.872251510620117,,,,,,,,,,,,,,,,,,,,,,,,10.64387035369873,
+min,,0.0,,,,,,,,,,,,,,,,,,,,,,,,0.0,
+25%,,20.0,,,,,,,,,,,,,,,,,,,,,,,,2.0,
+50%,,35.0,,,,,,,,,,,,,,,,,,,,,,,,4.0,
+75%,,51.0,,,,,,,,,,,,,,,,,,,,,,,,6.0,
+max,,120.0,,,,,,,,,,,,,,,,,,,,,,,,365.0,
