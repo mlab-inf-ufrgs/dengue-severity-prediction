@@ -1,6 +1,7 @@
 # Definindo o caminho do projeto
 from pathlib import Path
 
+
 def get_project_root(markers=(".git", "README.md", "pyproject.toml")):
     """
     Returns the root path of the project by looking for a marker file/directory.

@@ -4,6 +4,7 @@ import hashlib
 import pandas as pd
 from typing import List, Literal
 
+
 def build_row_hash(
     df: pd.DataFrame,
     cols: List[str],

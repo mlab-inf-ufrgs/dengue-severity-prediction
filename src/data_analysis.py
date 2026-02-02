@@ -61,15 +61,9 @@ def plot_correlation_heatmap(corr_matrix, target_col='severity', output_path=Non
     Plots a binned correlation heatmap based on the provided interpretation,
     with the target column highlighted.
     """
-    
-    # === 1. Define Bins and Colors based on your image ===
-    # Bins: [0, 0.05, 0.10, 0.15, 0.25, 1.0]
-    # This corresponds to the categories:
     # >0 (No/Very Weak), >0.05 (Weak), >0.10 (Moderate), >0.15 (Strong), >0.25 (Very Strong)
-    
     bins = [0, 0.05, 0.10, 0.15, 0.25, 1.0]
     
-    # 5 colors for the 5 bins. Using a Yellow-Orange-Red sequential palette.
     colors = [
         "#f7f7f7",  # (0 - 0.05) No/Very Weak (Light Grey)
         "#fff7bc",  # (0.05 - 0.10) Weak (Pale Yellow)
@@ -77,11 +71,8 @@ def plot_correlation_heatmap(corr_matrix, target_col='severity', output_path=Non
         "#fc8123",  # (0.15 - 0.25) Strong (Orange)
         "#990000"   # (0.25 - 1.0) Very Strong (Dark Red)
     ]
-    
-    # Create the discrete colormap and normalization
     my_cmap = ListedColormap(colors)
     my_norm = BoundaryNorm(bins, my_cmap.N)
-    # =======================================================
     
     num_features = corr_matrix.shape[0]
     fig_width = max(12, int(num_features * 0.7))
@@ -90,23 +81,19 @@ def plot_correlation_heatmap(corr_matrix, target_col='severity', output_path=Non
     plt.figure(figsize=(fig_width, fig_height))
     ax = plt.gca()
 
-    # Conditional Annotation (hides values below threshold)
     annot_labels = corr_matrix.applymap(lambda x: f"{x:.2f}" if abs(x) >= annot_threshold else "")
 
     sns.heatmap(
         corr_matrix.astype(float),
         annot=annot_labels,
         fmt="",
-        # --- Use the new colormap and normalization ---
         cmap=my_cmap,
         norm=my_norm,
-        # ---
         square=True,
         linewidths=.5,
         linecolor='white',
         annot_kws={"size": 8},
         ax=ax,
-        # --- Update the color bar ---
         cbar_kws={
             "shrink": .8,
             "ticks": bins,  # Put ticks at the bin edges
@@ -121,27 +108,22 @@ def plot_correlation_heatmap(corr_matrix, target_col='severity', output_path=Non
     plt.xticks(rotation=90, ha='right', fontsize=10)
     plt.yticks(rotation=0, va='center', fontsize=10)
 
-    # --- Highlight the Target Column/Row (same as before) ---
     if target_col in corr_matrix.columns:
         target_idx = corr_matrix.columns.get_loc(target_col)
         num_features = corr_matrix.shape[0]
         
-        # Highlight column
         ax.add_patch(patches.Rectangle(
             (target_idx, 0), 1, num_features,
             linewidth=3, edgecolor='lightgreen', facecolor='none', zorder=2
         ))
-        # Highlight row
         ax.add_patch(patches.Rectangle(
             (0, target_idx), num_features, 1,
             linewidth=3, edgecolor='lightgreen', facecolor='none', zorder=2
         ))
-        # Highlight intersection
         ax.add_patch(patches.Rectangle(
             (target_idx, target_idx), 1, 1,
             linewidth=4, edgecolor='lightgreen', facecolor='none', zorder=3
         ))
-    # ---
     
     plt.tight_layout()
     

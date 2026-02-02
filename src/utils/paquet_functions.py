@@ -5,6 +5,7 @@ from pathlib import Path
 from tqdm.auto import tqdm
 from utils.helpers import get_project_root  # usa o bootstrap padrão
 
+
 def save_parquet_in_chunks(df, relative_path, max_size_mb=25, compression='snappy'):
     """
     Divide a large DataFrame into multiple Parquet files, each with a size up to `max_size_mb`.
