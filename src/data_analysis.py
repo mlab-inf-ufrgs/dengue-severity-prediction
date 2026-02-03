@@ -7,18 +7,14 @@ from matplotlib.colors import ListedColormap, BoundaryNorm
 from pathlib import Path
 from scipy.stats import chi2_contingency
 from data_processing import process_data, read_parquet_data
-from utils.constants import (
-    PATIENT_ATTRS, PATIENT_DISEASES, PATIENT_SYMPTOMS,
-    NUMERIC_ATTRS
-)
+from utils.constants import *
+
 
 CORRELATIONS_TO_CHECK = [
-    (col, "severity") for col in PATIENT_ATTRS
-] + [
-    (col1, col2) for col1 in PATIENT_DISEASES for col2 in PATIENT_SYMPTOMS
-] + [
-    ("prova_laco", col) for col in PATIENT_SYMPTOMS
+    *[(col, "severity") for col in ALL_COLUMNS],
+    *[(col1, col2) for col1 in DISEASES_COLUMNS for col2 in SYMPTOMS_COLUMNS]
 ]
+
 
 def cramers_v(contingency_table):
     """ Calculate Cramér's V statistic for categorical-categorical association. """
@@ -42,7 +38,7 @@ def compute_cramers_v(df):
 
 
 def compute_correlation_matrix(df):
-    all_cols = list(PATIENT_ATTRS) + ["severity"]
+    all_cols = list(ALL_COLUMNS) + ["severity"]
     corr_matrix = pd.DataFrame(index=all_cols, columns=all_cols, dtype=float)
 
     for i, col1 in enumerate(all_cols):
@@ -153,7 +149,7 @@ if __name__ == "__main__":
     df = process_data(df, as_nominal=True)
 
     # Normalize numeric attributes
-    for col in NUMERIC_ATTRS:
+    for col in NUMERIC_COLUMNS:
         df[col] = (df[col] - df[col].mean()) / df[col].std()
 
     print("\n=== Processed Data Info ===")

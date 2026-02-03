@@ -1,19 +1,18 @@
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from typing import Dict, Any
-
 from utils.constants import *
 
 
-def process_data(df: pd.DataFrame, one_hot: bool = False) -> pd.DataFrame:
+def process_data(df: pd.DataFrame, one_hot_encode: bool = False) -> pd.DataFrame:
     """Process the input DataFrame according to the specified settings."""
     df = df.copy()
 
     df = df[df["sexo_paciente"].isin(["M", "F"])]
-    df["sexo_paciente"] = df["sexo_paciente"].map({"M": 0, "F": 1})
+    df["sexo_paciente"] = df["sexo_paciente"].map({"M": 1, "F": 2})
 
     df.loc[df["sexo_paciente"] == 0, "gestante_paciente"] = "6"
+
     df["gestante_paciente"] = df["gestante_paciente"].fillna("9")
     df["raca_cor_paciente"] = df["raca_cor_paciente"].fillna("9")
 
@@ -34,23 +33,21 @@ def process_data(df: pd.DataFrame, one_hot: bool = False) -> pd.DataFrame:
     df.loc[df["evolucao_caso"] == DEATH_DENGUE, "class"] = "severe"
     df = df.drop(["evolucao_caso", "classificacao_final"], axis=1)
 
-    # df["sigla_uf_residencia"] = df["sigla_uf_residencia"].apply(uf_to_region)
-    # df = df.dropna(axis=0, how="any", subset=["sigla_uf_residencia"])
-
-    cols_to_keep = ALL_COLUMNS_SORTED + ["class"]
+    cols_to_keep = set(ALL_COLUMNS_SORTED + ["class"])
     df.drop(
         [col for col in df.columns if col not in cols_to_keep], 
         inplace=True, axis=1
     )
 
-    df["idade_paciente"] = df["idade_paciente"].apply(process_age_as_numeric)
-    df["dias_sintomas_notificacao"] = df["dias_sintomas_notificacao"].apply(process_diagnosis_delay_as_numeric)
+    df["idade_paciente"] = df["idade_paciente"].apply(parse_age)
+    df["dias_sintomas_notificacao"] = df["dias_sintomas_notificacao"].apply(parse_diagnosis_delay)
 
     df = df.dropna(axis=0, how="any", subset=list(NUMERIC_COLUMNS))
+
     for col in NUMERIC_COLUMNS:
         df[col] = pd.to_numeric(df[col], errors='coerce', downcast='float')
 
-    if one_hot:
+    if one_hot_encode:
         cols_to_encode = [col for col in df.columns if col in CATEGORICAL_COLUMNS]
         prefix_map = {col: f'one_hot_{col}' for col in cols_to_encode}
         df = pd.get_dummies(df, columns=cols_to_encode, prefix=prefix_map, dtype=int)
@@ -74,79 +71,34 @@ def uf_to_region(uf: str) -> str:
     return None 
 
 
-def group_age(age: str) -> str:
-    """
-    Converts age (attribute "idade_paciente") into a category 
-    based on a clinical grouping.
-    """
-    if age is None: return None
-    
-    val_type, age_val = tuple(map(int, age.split("-")))
-
-    if val_type == 3 or val_type == 2:
-        return "1" # Infant
-    
-    if val_type != 4 or age_val > 120:
-        return None # Invalid
-    
-    if age_val <= 4: return "2" # Young children
-    if age_val <= 12: return "3" # Children
-    if age_val <= 17: return "4" # Adolescents
-    if age_val <= 49: return "5" # Young adulds
-    if age_val <= 64: return "6" # Older adults
-    return "7" # Elderly
-
-
-def group_diagnosis_delay(diagnosis_delay: str) -> str:
-    """
-    Converts the symptoms-diagnosis delay (attribute "dias_sintomas_notificacao")
-    into a category based on a clinical phase-based grouping.
-    """
-    try: diagnosis_delay = int(diagnosis_delay)
-    except Exception: return None
-    
-    if diagnosis_delay < 0 or diagnosis_delay > 365: 
-        return None # Invalid
-    
-    if diagnosis_delay <= 3: return "1" # Early diagnosis
-    if diagnosis_delay <= 7: return "2" # Critical phase diagnosis
-    return "3" # Late diagnosis
-
-
-def process_age_as_numeric(age: str) -> int:
+def parse_age(age: str) -> int:
     """
     Converts age (attribute "idade_paciente") into a numeric value in years.
-    Invalid or inconsistent data is set to None.
+    Invalid data is set to None.
     """
     if age is None: return None
-    
     try:
         val_type, age_val = tuple(map(int, age.split("-")))
+        if val_type < 4: return 0
+        if val_type != 4 or age_val > 120 or age_val < 1: return None
+        return age_val
     except:
         return None
 
-    if val_type < 4: return 0
-    
-    if val_type != 4 or age_val > 120 or age_val < 1:
-        return None
-    
-    return age_val
 
-
-def process_diagnosis_delay_as_numeric(diagnosis_delay: str) -> int:
+def parse_diagnosis_delay(diagnosis_delay: str) -> int:
     """
     Converts the symptoms-diagnosis delay (attribute "dias_sintomas_notificacao")
     into a numeric value in days. Invalid data is set to None.
     """
+    if diagnosis_delay is None: return None
     try: 
         diagnosis_delay = int(diagnosis_delay)
+        if diagnosis_delay < 0: diagnosis_delay = 0
+        elif diagnosis_delay > 365: diagnosis_delay = 365
+        return diagnosis_delay
     except Exception: 
         return None
-
-    if diagnosis_delay < 0: diagnosis_delay = 0
-    elif diagnosis_delay > 365: diagnosis_delay = 365
-
-    return diagnosis_delay
 
 
 # --- Data Loading Utilities ---
@@ -174,20 +126,19 @@ def read_parquet_data(input_path: Path) -> pd.DataFrame:
     return df
 
 
-def parse_args() -> Dict[str, Any]:
+if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser(description="Process SINAN data.")
+
     parser.add_argument('input', type=str, help='Input Parquet file path.')
     parser.add_argument('-e', '--one-hot-encode', action='store_true', help='Encode all categorical attributes as one-hot.')
     parser.add_argument('-o', '--output', default=None, type=str, help='Output CSV file path.')
-    return vars(parser.parse_args())
 
-
-if __name__ == "__main__":
-    args = parse_args()
+    args = vars(parser.parse_args())
 
     input_path = Path(args['input'])
-    one_hot = args['one_hot_encode']
+    one_hot_encode = args['one_hot_encode']
     output_path = args['output']
 
     if not input_path.exists():
@@ -208,5 +159,5 @@ if __name__ == "__main__":
         base_name += "-processed.csv"
         output_path = input_dir / base_name
 
-    df_processed = process_data(df, one_hot=one_hot)
+    df_processed = process_data(df, one_hot_encode=one_hot_encode)
     df_processed.to_csv(output_path, encoding='utf-8', index=False)
