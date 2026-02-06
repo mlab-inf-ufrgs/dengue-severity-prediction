@@ -15,7 +15,7 @@ DEATH_OTHER = "3"
 # --- Scheme Columns Info ---
 
 GEOGRAPHIC_COLUMNS  = {"sigla_uf_residencia"}
-DEMOGRAPHIC_COLUMNS  = {"idade_paciente", "sexo_paciente", "raca_cor_paciente", "gestante_paciente"}
+DEMOGRAPHIC_COLUMNS  = {"idade_paciente", "sexo_paciente", "gestante_paciente", "raca_cor_paciente"}
 DISEASES_COLUMNS = {
     "possui_doenca_autoimune", "possui_diabetes", "possui_doencas_hematologicas",
     "possui_hepatopatias", "possui_doenca_renal", "possui_hipertensao",
@@ -45,7 +45,7 @@ NUMERIC_COLUMNS = {
     "idade_paciente", "dias_sintomas_notificacao"
 }
 CATEGORICAL_COLUMNS = {
-    "raca_cor_paciente", "gestante_paciente", "sigla_uf_residencia"
+    "gestante_paciente", "raca_cor_paciente", "sigla_uf_residencia"
 }
 
 
@@ -54,6 +54,7 @@ CATEGORICAL_COLUMNS = {
 RANDOM_STATE = 42
 TEST_RATIO = 0.15
 N_FOLDS = 5
+N_CLASSES = 3
 
 TARGET_NAMES = ["low_risk", "alarm", "severe"]
 TARGET_NAMES_COARSE = ["low_risk", "high_risk"]

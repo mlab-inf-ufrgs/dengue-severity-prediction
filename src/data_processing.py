@@ -9,10 +9,10 @@ def process_data(df: pd.DataFrame, one_hot_encode: bool = False) -> pd.DataFrame
     df = df.copy()
 
     df = df[df["sexo_paciente"].isin(["M", "F"])]
-    df["sexo_paciente"] = df["sexo_paciente"].map({"M": 1, "F": 2})
+    df["sexo_paciente"] = df["sexo_paciente"].map({"M": "1", "F": "2"})
 
-    df.loc[df["sexo_paciente"] == 0, "gestante_paciente"] = "6"
-
+    df.loc[df["sexo_paciente"] == "1", "gestante_paciente"] = "6"
+    
     df["gestante_paciente"] = df["gestante_paciente"].fillna("9")
     df["raca_cor_paciente"] = df["raca_cor_paciente"].fillna("9")
 
@@ -41,8 +41,9 @@ def process_data(df: pd.DataFrame, one_hot_encode: bool = False) -> pd.DataFrame
 
     df["idade_paciente"] = df["idade_paciente"].apply(parse_age)
     df["dias_sintomas_notificacao"] = df["dias_sintomas_notificacao"].apply(parse_diagnosis_delay)
+    df["sigla_uf_residencia"] = df["sigla_uf_residencia"].apply(uf_to_region)
 
-    df = df.dropna(axis=0, how="any", subset=list(NUMERIC_COLUMNS))
+    df = df.dropna(axis=0, how="any", subset=list(NUMERIC_COLUMNS) + ["sigla_uf_residencia"])
 
     for col in NUMERIC_COLUMNS:
         df[col] = pd.to_numeric(df[col], errors='coerce', downcast='float')
