@@ -11,7 +11,7 @@ from utils.constants import *
 
 
 CORRELATIONS_TO_CHECK = [
-    *[(col, "severity") for col in ALL_COLUMNS],
+    *[(col, "severity") for col in REQUIRED_COLUMNS_SET],
     *[(col1, col2) for col1 in DISEASES_COLUMNS for col2 in SYMPTOMS_COLUMNS]
 ]
 
@@ -38,7 +38,7 @@ def compute_cramers_v(df):
 
 
 def compute_correlation_matrix(df):
-    all_cols = list(ALL_COLUMNS) + ["severity"]
+    all_cols = list(REQUIRED_COLUMNS_SET) + ["severity"]
     corr_matrix = pd.DataFrame(index=all_cols, columns=all_cols, dtype=float)
 
     for i, col1 in enumerate(all_cols):
@@ -133,47 +133,57 @@ def collect_correlated_columns(cramers_v_results, threshold=0.4):
 
 
 if __name__ == "__main__":
-    input_dir = Path("data/2_silver")
-    output_dir = Path("analysis_results")
-
+    output_dir = Path("results/data_analysis")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     pd.set_option('display.max_rows', 500)
     pd.set_option('display.max_columns', 500)
 
-    df = read_parquet_data(input_dir)
+    df = pd.read_csv("data/3_gold/dataset-processed-gb.csv")
 
-    print("=== Original Data Info ===")
-    df.info()
+    df_low_risk = df[df["class"] == "low_risk"].copy()
+    df_alarm = df[df["class"] == "alarm"].copy()
+    df_severe = df[df["class"] == "severe"].copy()
 
-    df = process_data(df, as_nominal=True)
+    df_description_low_risk = df_low_risk.describe(include='all')
+    df_description_alarm = df_alarm.describe(include='all')
+    df_description_severe = df_severe.describe(include='all')
 
-    # Normalize numeric attributes
-    for col in NUMERIC_COLUMNS:
-        df[col] = (df[col] - df[col].mean()) / df[col].std()
+    with open(output_dir / "data_description_low_risk.csv", 'w') as f:
+        df_description_low_risk.to_csv(f)
 
-    print("\n=== Processed Data Info ===")
-    df.info()
-
-    print("\n=== Processed Data Description ===")
-    df_description = df.describe(include='all')
-    with open(output_dir / "data_description.csv", 'w') as f:
-        df_description.to_csv(f)
-
-    cramers_v_results = compute_cramers_v(df)
-
-    cramers_v_results = sorted(
-        cramers_v_results.items(), key=lambda item: item[1], reverse=True
-    )
-    cramers_v_results = {k: v for k, v in cramers_v_results}
+    with open(output_dir / "data_description_alarm.csv", 'w') as f:
+        df_description_alarm.to_csv(f)
     
-    results_path = output_dir / "cramers_v_results.csv"
-    figure_path = output_dir / "cramers_v_heatmap.pdf"
+    with open(output_dir / "data_description_severe.csv", 'w') as f:
+        df_description_severe.to_csv(f)
 
-    with open(results_path, 'w') as f:
-        f.write("Column_1,Column_2,Cramers_V\n")
-        for (col1, col2), v in cramers_v_results.items():
-            f.write(f"{col1},{col2},{v:.4f}\n")
+    # # Normalize numeric attributes
+    # for col in NUMERIC_COLUMNS:
+    #     df[col] = (df[col] - df[col].mean()) / df[col].std()
 
-    corr_matrix = compute_correlation_matrix(df)
-    plot_correlation_heatmap(corr_matrix, output_path=figure_path)
+    # print("\n=== Processed Data Info ===")
+    # df.info()
+
+    # print("\n=== Processed Data Description ===")
+    # df_description = df.describe(include='all')
+    # with open(output_dir / "data_description.csv", 'w') as f:
+    #     df_description.to_csv(f)
+
+    # cramers_v_results = compute_cramers_v(df)
+
+    # cramers_v_results = sorted(
+    #     cramers_v_results.items(), key=lambda item: item[1], reverse=True
+    # )
+    # cramers_v_results = {k: v for k, v in cramers_v_results}
+    
+    # results_path = output_dir / "cramers_v_results.csv"
+    # figure_path = output_dir / "cramers_v_heatmap.pdf"
+
+    # with open(results_path, 'w') as f:
+    #     f.write("Column_1,Column_2,Cramers_V\n")
+    #     for (col1, col2), v in cramers_v_results.items():
+    #         f.write(f"{col1},{col2},{v:.4f}\n")
+
+    # corr_matrix = compute_correlation_matrix(df)
+    # plot_correlation_heatmap(corr_matrix, output_path=figure_path)
