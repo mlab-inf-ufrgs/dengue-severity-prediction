@@ -8,17 +8,17 @@ def process_data(df: pd.DataFrame, one_hot_encode: bool = False) -> pd.DataFrame
     """Process the input DataFrame according to the specified settings."""
     df = df.copy()
 
-    df = df[df["sexo_paciente"].isin(["M", "F"])]
+    df = df[df["sexo_paciente"].isin(["M", "F"])] # type: ignore
     df["sexo_paciente"] = df["sexo_paciente"].map({"M": "1", "F": "2"})
 
-    df.loc[df["sexo_paciente"] == "1", "gestante_paciente"] = "6"
-    
-    df["gestante_paciente"] = df["gestante_paciente"].fillna("9")
-    df["raca_cor_paciente"] = df["raca_cor_paciente"].fillna("9")
+    df.loc[df["sexo_paciente"] == 1, "gestante_paciente"] = DOES_NOT_APPLY
+
+    df["gestante_paciente"] = df["gestante_paciente"].fillna(IGNORED)
+    df["raca_cor_paciente"] = df["raca_cor_paciente"].fillna(IGNORED)
 
     for col in BINARY_COLUMNS:
         df[col] = df[col].fillna("2")
-        df[col] = pd.to_numeric(df[col], errors='coerce').fillna(2)
+        df[col] = pd.to_numeric(df[col], errors='coerce').fillna(2) # type: ignore
         df[col] = np.where(df[col] == 1, 1, 0)
 
     # Remove rows with missing data
@@ -26,7 +26,7 @@ def process_data(df: pd.DataFrame, one_hot_encode: bool = False) -> pd.DataFrame
     df = df.dropna(axis=0, how="any", subset=required_cols)
 
     # Remove non-infected cases or Chikungunya cases
-    df = df[df["classificacao_final"].isin([DENGUE, DENGUE_ALARM, DENGUE_SEVERE])]
+    df = df[df["classificacao_final"].isin([DENGUE, DENGUE_ALARM, DENGUE_SEVERE])] # type: ignore
 
     target_map = {DENGUE: "low_risk", DENGUE_ALARM: "alarm", DENGUE_SEVERE: "severe" }
     df["class"] = df["classificacao_final"].map(target_map)
@@ -69,7 +69,7 @@ def uf_to_region(uf: str) -> str:
     if uf in {"DF", "GO", "MT", "MS"}: return "CO" # Central-West
     if uf in {"ES", "MG", "RJ", "SP"}: return "SE" # Southeast
     if uf in {"PR", "RS", "SC"}: return "S" # South
-    return None 
+    return None # type: ignore
 
 
 def parse_age(age: str) -> int:
@@ -80,11 +80,11 @@ def parse_age(age: str) -> int:
     if age is None: return None
     try:
         val_type, age_val = tuple(map(int, age.split("-")))
-        if val_type < 4: return 0
-        if val_type != 4 or age_val > 120 or age_val < 1: return None
+        if val_type < YEAR_CODE: return 0
+        if val_type != YEAR_CODE or age_val > 120 or age_val < 1: return None # type: ignore
         return age_val
     except:
-        return None
+        return None # type: ignore
 
 
 def parse_diagnosis_delay(diagnosis_delay: str) -> int:
@@ -94,12 +94,12 @@ def parse_diagnosis_delay(diagnosis_delay: str) -> int:
     """
     if diagnosis_delay is None: return None
     try: 
-        diagnosis_delay = int(diagnosis_delay)
-        if diagnosis_delay < 0: diagnosis_delay = 0
-        elif diagnosis_delay > 365: diagnosis_delay = 365
-        return diagnosis_delay
+        delay = int(diagnosis_delay)
+        if delay < 0: delay = 0
+        elif delay > 365: delay = 365
+        return delay
     except Exception: 
-        return None
+        return None # type: ignore
 
 
 # --- Data Loading Utilities ---
