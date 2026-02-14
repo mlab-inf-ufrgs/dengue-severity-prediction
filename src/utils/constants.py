@@ -18,7 +18,7 @@ DOES_NOT_APPLY = "6"  # Pregnancy
 IGNORED = "9"   # General
 YEAR_CODE = 4 # Type of age code indicating years
 
-GEOGRAPHIC_COLUMNS  = {"sigla_uf_residencia"}
+GEOGRAPHIC_COLUMNS  = {"sigla_uf_residencia", "classificacao_municipio"}
 DEMOGRAPHIC_COLUMNS  = {"idade_paciente", "sexo_paciente", "gestante_paciente", "raca_cor_paciente"}
 DISEASES_COLUMNS = {
     "possui_doenca_autoimune", "possui_diabetes", "possui_doencas_hematologicas",
@@ -49,7 +49,7 @@ NUMERIC_COLUMNS = {
     "idade_paciente", "dias_sintomas_notificacao"
 }
 CATEGORICAL_COLUMNS = {
-    "gestante_paciente", "raca_cor_paciente", "sigla_uf_residencia"
+    "gestante_paciente", "raca_cor_paciente", "sigla_uf_residencia", "classificacao_municipio"
 }
 
 

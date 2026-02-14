@@ -21,12 +21,25 @@ def process_data(df: pd.DataFrame, one_hot_encode: bool = False) -> pd.DataFrame
         df[col] = pd.to_numeric(df[col], errors='coerce').fillna(2) # type: ignore
         df[col] = np.where(df[col] == 1, 1, 0)
 
+    # Remove non-infected cases or Chikungunya cases
+    df = df[df["classificacao_final"].isin([DENGUE, DENGUE_ALARM, DENGUE_SEVERE])] # type: ignore
+
+    df_regic = pd.read_csv('data/external/REGIC2018_Municipios_Hierarquia.csv')
+
+    regic_lookup = df_regic[['cod_municipio', 'cod_hierarquia']].rename(
+        columns={'cod_municipio': 'id_municipio_residencia', 'cod_hierarquia': 'classificacao_municipio'}
+    )
+
+    df['id_municipio_residencia'] = df['id_municipio_residencia'].astype(str)
+    regic_lookup['id_municipio_residencia'] = regic_lookup['id_municipio_residencia'].astype(str)
+
+    df = df.merge(regic_lookup, on='id_municipio_residencia', how='left')
+
+    df['classificacao_municipio'] = df['classificacao_municipio'].fillna('NA')
+
     # Remove rows with missing data
     required_cols = ALL_COLUMNS_SORTED + ["evolucao_caso", "classificacao_final"]
     df = df.dropna(axis=0, how="any", subset=required_cols)
-
-    # Remove non-infected cases or Chikungunya cases
-    df = df[df["classificacao_final"].isin([DENGUE, DENGUE_ALARM, DENGUE_SEVERE])] # type: ignore
 
     target_map = {DENGUE: "low_risk", DENGUE_ALARM: "alarm", DENGUE_SEVERE: "severe" }
     df["class"] = df["classificacao_final"].map(target_map)
