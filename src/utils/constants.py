@@ -70,3 +70,6 @@ LABEL_TARGET_MAP = {idx: name for idx, name in enumerate(TARGET_NAMES)}
 COARSE_LABEL_MAP = {0: 0, 1: 1, 2: 1}
 FINE_LABEL_MAP = {1: 0, 2: 1}
 FINE_LABEL_MAP_REVERSE = {0: 1, 1: 2}
+
+DATASET_RF_PATH = "../../data/3_gold/dataset-processed-rf.csv"
+DATASET_GB_PATH = "../../data/3_gold/dataset-processed-gb.csv"
