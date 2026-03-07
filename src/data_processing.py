@@ -2,9 +2,10 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from utils.constants import *
+import argparse
 
 
-def process_data(df: pd.DataFrame, one_hot_encode: bool = False) -> pd.DataFrame:
+def process_data(df: pd.DataFrame, one_hot_encode: bool = False, urban_hierarchy: bool = False) -> pd.DataFrame:
     """Process the input DataFrame according to the specified settings."""
     df = df.copy()
 
@@ -24,21 +25,26 @@ def process_data(df: pd.DataFrame, one_hot_encode: bool = False) -> pd.DataFrame
     # Remove non-infected cases or Chikungunya cases
     df = df[df["classificacao_final"].isin([DENGUE, DENGUE_ALARM, DENGUE_SEVERE])] # type: ignore
 
-    df_regic = pd.read_csv('data/external/REGIC2018_Municipios_Hierarquia.csv')
+    if urban_hierarchy:
+        df_regic = pd.read_csv('data/external/REGIC2018_Municipios_Hierarquia.csv')
 
-    regic_lookup = df_regic[['cod_municipio', 'cod_hierarquia']].rename(
-        columns={'cod_municipio': 'id_municipio_residencia', 'cod_hierarquia': 'classificacao_municipio'}
-    )
+        regic_lookup = df_regic[['cod_municipio', 'cod_hierarquia']].rename(
+            columns={'cod_municipio': 'id_municipio_residencia', 'cod_hierarquia': 'classificacao_municipio'}
+        )
 
-    df['id_municipio_residencia'] = df['id_municipio_residencia'].astype(str)
-    regic_lookup['id_municipio_residencia'] = regic_lookup['id_municipio_residencia'].astype(str)
+        df['id_municipio_residencia'] = df['id_municipio_residencia'].astype(str)
+        regic_lookup['id_municipio_residencia'] = regic_lookup['id_municipio_residencia'].astype(str)
 
-    df = df.merge(regic_lookup, on='id_municipio_residencia', how='left')
+        df = df.merge(regic_lookup, on='id_municipio_residencia', how='left')
 
-    df['classificacao_municipio'] = df['classificacao_municipio'].fillna('NA')
+        df['classificacao_municipio'] = df['classificacao_municipio'].fillna('NA')
+
+    else:
+        GEOGRAPHIC_COLUMNS.discard('classificacao_municipio')
+        CATEGORICAL_COLUMNS.discard('classificacao_municipio')
 
     # Remove rows with missing data
-    required_cols = ALL_COLUMNS_SORTED + ["evolucao_caso", "classificacao_final"]
+    required_cols = [col for col in ALL_COLUMNS_SORTED + ["evolucao_caso", "classificacao_final"] if col in df.columns]
     df = df.dropna(axis=0, how="any", subset=required_cols)
 
     target_map = {DENGUE: "low_risk", DENGUE_ALARM: "alarm", DENGUE_SEVERE: "severe" }
@@ -55,8 +61,9 @@ def process_data(df: pd.DataFrame, one_hot_encode: bool = False) -> pd.DataFrame
     df["idade_paciente"] = df["idade_paciente"].apply(parse_age)
     df["dias_sintomas_notificacao"] = df["dias_sintomas_notificacao"].apply(parse_diagnosis_delay)
     df["sigla_uf_residencia"] = df["sigla_uf_residencia"].apply(uf_to_region)
+    df.rename(columns={"sigla_uf_residencia": "sigla_regiao_residencia"}, inplace=True)
 
-    df = df.dropna(axis=0, how="any", subset=list(NUMERIC_COLUMNS) + ["sigla_uf_residencia"])
+    df = df.dropna(axis=0, how="any", subset=list(NUMERIC_COLUMNS) + ["sigla_regiao_residencia"])
 
     for col in NUMERIC_COLUMNS:
         df[col] = pd.to_numeric(df[col], errors='coerce', downcast='float')
@@ -141,18 +148,18 @@ def read_parquet_data(input_path: Path) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    import argparse
-
     parser = argparse.ArgumentParser(description="Process SINAN data.")
 
     parser.add_argument('input', type=str, help='Input Parquet file path.')
     parser.add_argument('-e', '--one-hot-encode', action='store_true', help='Encode all categorical attributes as one-hot.')
+    parser.add_argument('-u', '--urban-hierarchy', action='store_true', help='Include urban hierarchy feature based on REGIC classification.')
     parser.add_argument('-o', '--output', default=None, type=str, help='Output CSV file path.')
 
     args = vars(parser.parse_args())
 
     input_path = Path(args['input'])
     one_hot_encode = args['one_hot_encode']
+    urban_hierarchy = args['urban_hierarchy']
     output_path = args['output']
 
     if not input_path.exists():
@@ -173,5 +180,5 @@ if __name__ == "__main__":
         base_name += "-processed.csv"
         output_path = input_dir / base_name
 
-    df_processed = process_data(df, one_hot_encode=one_hot_encode)
+    df_processed = process_data(df, one_hot_encode=one_hot_encode, urban_hierarchy=urban_hierarchy)
     df_processed.to_csv(output_path, encoding='utf-8', index=False)
