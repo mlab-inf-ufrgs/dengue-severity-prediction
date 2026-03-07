@@ -2,6 +2,8 @@ from sklearn.metrics import classification_report
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from pathlib import Path
+import seaborn as sns
 
 def plot_metrics_by_class(y_true, y_pred, target_names, figsize=(10, 6)):
     """
@@ -36,9 +38,9 @@ def plot_metrics_by_class(y_true, y_pred, target_names, figsize=(10, 6)):
     width = 0.25
     
     # Preparar dados
-    precision_values = [report_dict[cls]['precision'] for cls in target_names]
-    recall_values = [report_dict[cls]['recall'] for cls in target_names]
-    f1_values = [report_dict[cls]['f1-score'] for cls in target_names]
+    precision_values = [report_dict[cls]['precision'] for cls in target_names] # type: ignore
+    recall_values = [report_dict[cls]['recall'] for cls in target_names] # type: ignore
+    f1_values = [report_dict[cls]['f1-score'] for cls in target_names] # type: ignore
     
     # Criar barras
     bars1 = ax.bar(x - width, precision_values, width, label='Precision', alpha=0.8)
@@ -126,3 +128,42 @@ def print_summary_metrics_latex(report_dict):
                                       label="tab:metrics")
     
     print(latex_table)
+
+def box_plot_from_txt(model: str, validation_dir: str = 'results/validation', urban_hierarchy: bool = False):
+    input_path = validation_dir + "/fold_scores/" + f"{model}_fold_scores.txt"
+
+    if urban_hierarchy:
+        input_path = input_path.replace('.txt', '_u.txt')
+
+    df_results = pd.read_csv(input_path, sep='\t')
+
+    stats = df_results.groupby(['Model', 'Version'])['F1_Macro'].agg(['mean', 'std']).reset_index()
+    stats['Text'] = stats['Model'] + " (" + stats['Version'] + "): " + \
+                    stats['mean'].round(4).astype(str) + " ± " + stats['std'].round(4).astype(str)
+    stats_text = "\n".join(stats['Text'])
+
+    df_results['Algorithm'] = model
+
+    fig, ax = plt.subplots(figsize=(8, 7))
+    fig.subplots_adjust(bottom=0.25)
+
+    sns.boxplot(
+        data=df_results, x='Algorithm', y='F1_Macro', hue='Version',
+        palette='Set2', showmeans=True,
+        meanprops={"marker":"o", "markerfacecolor":"white", "markeredgecolor":"black", "markersize":"8"},
+        ax=ax
+    )
+
+    ax.set_ylabel('F1-Macro Score')
+    ax.set_xlabel('Algorithm')
+    ax.legend(title='Version')
+    ax.grid(axis='y', linestyle='--', alpha=0.7)
+
+    output_path = validation_dir + "/box_plots/" + f"{model}.png"
+
+    if urban_hierarchy:
+        output_path = output_path.replace('.png', '_u.png')
+
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"Plot saved to {output_path}")
