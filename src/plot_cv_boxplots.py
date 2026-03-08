@@ -13,7 +13,7 @@ from xgboost import XGBClassifier
 from catboost import CatBoostClassifier
 
 from utils.constants import *
-from utils.visualization import box_plot_from_txt
+from utils.visualization import box_plot_from_txt, compare_box_plots
 
 # --- Helper Functions ---
 def get_coarse_fine_data(X, y):
@@ -248,14 +248,14 @@ def validation(models, urban_hierarchy=False):
         print(f"Fold scores saved to {fold_data_path}")
 
 def main():
-    models = ['XGB', 'CB', 'HGB']
+    models = ['RF']
     urban_hierarchy = False
 
     #validation(models, urban_hierarchy=urban_hierarchy)
 
     for model in models:
-        box_plot_from_txt(model, urban_hierarchy=urban_hierarchy)
-
+        #box_plot_from_txt(model, urban_hierarchy=urban_hierarchy)
+        compare_box_plots(model)
 
 if __name__ == "__main__":
     main()

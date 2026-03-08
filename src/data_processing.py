@@ -52,7 +52,7 @@ def process_data(df: pd.DataFrame, one_hot_encode: bool = False, urban_hierarchy
     df.loc[df["evolucao_caso"] == DEATH_DENGUE, "class"] = "severe"
     df = df.drop(["evolucao_caso", "classificacao_final"], axis=1)
 
-    cols_to_keep = set(ALL_COLUMNS_SORTED + ["class"])
+    cols_to_keep = set(ALL_COLUMNS_SORTED + ["class", "sigla_uf_residencia"])
     df.drop(
         [col for col in df.columns if col not in cols_to_keep], 
         inplace=True, axis=1
@@ -61,9 +61,9 @@ def process_data(df: pd.DataFrame, one_hot_encode: bool = False, urban_hierarchy
     df["idade_paciente"] = df["idade_paciente"].apply(parse_age)
     df["dias_sintomas_notificacao"] = df["dias_sintomas_notificacao"].apply(parse_diagnosis_delay)
     df["sigla_uf_residencia"] = df["sigla_uf_residencia"].apply(uf_to_region)
-    df.rename(columns={"sigla_uf_residencia": "sigla_regiao_residencia"}, inplace=True)
+    df.rename(columns={"sigla_uf_residencia": "sigla_uf_residencia"}, inplace=True)
 
-    df = df.dropna(axis=0, how="any", subset=list(NUMERIC_COLUMNS) + ["sigla_regiao_residencia"])
+    df = df.dropna(axis=0, how="any", subset=list(NUMERIC_COLUMNS) + ["sigla_uf_residencia"])
 
     for col in NUMERIC_COLUMNS:
         df[col] = pd.to_numeric(df[col], errors='coerce', downcast='float')

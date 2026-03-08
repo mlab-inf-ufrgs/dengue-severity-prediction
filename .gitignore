@@ -4,16 +4,7 @@ __pycache__/
 
 data/3_gold/
 
-/data/temp
-/relatorio.tex
-
-/test
-src/hp_tuning.ipynb
-relatorio-2.tex
-slides.tex
-relatorio-1.tex
-artigo.tex
-
 src/shap_hgb.ipynb
 
 src/.temp
+/results/validation/.temp
